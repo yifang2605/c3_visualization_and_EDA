@@ -4,6 +4,14 @@ Yi
 2022-10-04
 
 ``` r
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+```
+
+``` r
 library(tidyverse)
 ```
 
@@ -68,7 +76,7 @@ weather_df %>%
 
     ## Warning: Removed 15 rows containing missing values (geom_point).
 
-![](visualization_2_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-4-1.png" width="90%" />
 
 ## labels
 
@@ -88,7 +96,7 @@ weather_df %>%
 
     ## Warning: Removed 15 rows containing missing values (geom_point).
 
-![](visualization_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-5-1.png" width="90%" />
 
 ## scales
 
@@ -115,7 +123,7 @@ weather_df %>%
 
     ## Warning: Removed 15 rows containing missing values (geom_point).
 
-![](visualization_2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-6-1.png" width="90%" />
 
 ``` r
 weather_df %>% 
@@ -141,7 +149,7 @@ weather_df %>%
 
     ## Warning: Removed 90 rows containing missing values (geom_point).
 
-![](visualization_2_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-6-2.png" width="90%" />
 
 colors: `scale_color_hue()`
 
@@ -161,7 +169,7 @@ weather_df %>%
 
     ## Warning: Removed 15 rows containing missing values (geom_point).
 
-![](visualization_2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-7-1.png" width="90%" />
 
 ``` r
 ggp_temp_plot = 
@@ -179,3 +187,65 @@ ggp_temp_plot =
     discrete = TRUE
   )
 ```
+
+We used `discrete = TRUE` because the color aesthetic is mapped to a
+discrete variable. In other cases (for example, when color mapped to
+prcp) you can omit this argument to get a continuous color gradient. The
+`viridis::scale_fill_viridis()` function is appropriate for the fill
+aesthetic used in histograms, density plots, and elsewhere.
+
+## Themes
+
+-   background color
+-   location of the the legend.
+
+``` r
+ggp_temp_plot + 
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-8-1.png" width="90%" />
+
+``` r
+ggp_temp_plot + 
+  theme_classic() + 
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-8-2.png" width="90%" />
+
+``` r
+ggp_temp_plot + 
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-8-3.png" width="90%" />
+
+``` r
+ggp_temp_plot + 
+  ggthemes::theme_excel() + 
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-8-4.png" width="90%" />
+
+order matters for themes
+
+``` r
+ggp_temp_plot + 
+  theme(legend.position = "bottom") +
+  theme_minimal()
+```
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+<img src="visualization_2_files/figure-gfm/unnamed-chunk-9-1.png" width="90%" />
