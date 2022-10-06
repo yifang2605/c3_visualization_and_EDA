@@ -414,3 +414,82 @@ weather_df %>%
 | 2017-10-01 |           21.8 |       30.3 |          8.3 |
 | 2017-11-01 |           12.3 |       28.4 |          1.4 |
 | 2017-12-01 |            4.5 |       26.5 |          2.2 |
+
+# Groups mutates
+
+``` r
+weather_df %>%
+  group_by(name) %>%
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    centered_tmax = tmax - mean_tmax) %>%
+  view()
+
+
+weather_df %>%
+  group_by(name) %>%
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    centered_tmax = tmax - mean_tmax) %>% 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) + 
+    geom_point() 
+```
+
+    ## Warning: Removed 3 rows containing missing values (geom_point).
+
+<img src="numeric_eda_files/figure-gfm/unnamed-chunk-13-1.png" width="90%" />
+
+# Window functions
+
+`lag()`, `lead()`
+
+``` r
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(
+    yesterday_tmax = lag(tmax),
+    tmax_change = tmax - yesterday_tmax
+  ) %>% 
+  summarise(
+    sd_tmax_change = sd(tmax_change, na.rm=TRUE)
+  ) %>% 
+  view
+```
+
+`rank()`
+
+``` r
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(
+    tmax_rank = min_rank(tmax)
+    ) %>% 
+  view
+
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(
+    tmax_rank = min_rank(desc(tmax))
+    )%>% 
+  view
+
+weather_df %>%
+  group_by(name, month) %>%
+  filter(min_rank(desc(tmax)) < 4)
+```
+
+    ## # A tibble: 149 × 7
+    ## # Groups:   name, month [36]
+    ##    name           id          date        prcp  tmax  tmin month     
+    ##    <chr>          <chr>       <date>     <dbl> <dbl> <dbl> <date>    
+    ##  1 CentralPark_NY USW00094728 2017-01-12    13  18.9   8.3 2017-01-01
+    ##  2 CentralPark_NY USW00094728 2017-01-13     0  16.7   0   2017-01-01
+    ##  3 CentralPark_NY USW00094728 2017-01-26     5  13.3   6.1 2017-01-01
+    ##  4 CentralPark_NY USW00094728 2017-02-19     0  18.3  11.7 2017-02-01
+    ##  5 CentralPark_NY USW00094728 2017-02-23     0  18.3   6.7 2017-02-01
+    ##  6 CentralPark_NY USW00094728 2017-02-24     0  21.1  14.4 2017-02-01
+    ##  7 CentralPark_NY USW00094728 2017-03-01    30  21.1  12.2 2017-03-01
+    ##  8 CentralPark_NY USW00094728 2017-03-02     0  17.8   1.7 2017-03-01
+    ##  9 CentralPark_NY USW00094728 2017-03-25     3  16.7   5.6 2017-03-01
+    ## 10 CentralPark_NY USW00094728 2017-04-16     0  30.6  15   2017-04-01
+    ## # … with 139 more rows
