@@ -15,13 +15,11 @@ knitr::opts_chunk$set(
 
 ```{r}
 library(tidyverse)
-library(ggridges)
-library(patchwork)
 ```
 
-load and clean data
+# load and clean data
 ```{r}
-weather_df = 
+weather_df =  
   rnoaa::meteo_pull_monitors(
     c("USW00094728", "USC00519397", "USS0023B17S"),
     var = c("PRCP", "TMIN", "TMAX"), 
@@ -34,254 +32,156 @@ weather_df =
       USC00519397 = "Waikiki_HA",
       USS0023B17S = "Waterhole_WA"),
     tmin = tmin / 10,
-    tmax = tmax / 10) %>%
+    tmax = tmax / 10,
+    month = lubridate::floor_date(date, unit = "month")) %>%
   select(name, id, everything())
 ```
 
 
-original scatter plot
-```{r}
-weather_df %>% 
-  ggplot(aes(x = tmin, y = tmax)) + 
-  geom_point(aes(color = name), alpha = .5)
+# `group_by()`
 
+```{r}
+weather_df %>%
+  group_by(name, month)
 ```
 
-## labels
-
-provide informative axis labels, plot titles, and captions
+## `summarize()`
 
 ```{r}
-weather_df %>% 
-  ggplot(aes(x = tmin, y = tmax)) + 
-  geom_point(aes(color = name), alpha = .5) + 
-  labs(
-    title = "Temperature plot",
-    x = "Minimum daily temperature (C)",
-    y = "Maxiumum daily temperature (C)",
-    caption = "Data from the rnoaa package"
+weather_df %>%
+  group_by(name) %>% 
+  summarize()
+
+weather_df %>%
+  group_by(name) %>% 
+  summarize(
+    n_obs = n()
+  )
+
+weather_df %>%
+  group_by(name, month) %>% 
+  summarize(
+    n_obs = n()
   )
 ```
 
-## scales
-
-axis ticks: `scale_x_*` , `scale_y_*` 
-
-where * depends on the type of variable mapped to the x and y aesthetics 
-
-(i.e. `continuous` vs `discrete`)
-
-```{r}
-weather_df %>% 
-  ggplot(aes(x = tmin, y = tmax)) + 
-  geom_point(aes(color = name), alpha = .5) + 
-  labs(
-    title = "Temperature plot",
-    x = "Minimum daily temperature (C)",
-    y = "Maxiumum daily temperature (C)",
-    caption = "Data from the rnoaa package") + 
-  scale_x_continuous(
-    breaks = c(-15, 0, 15), 
-    labels = c("-15º C", "0", "15"))
-
-weather_df %>% 
-  ggplot(aes(x = tmin, y = tmax)) + 
-  geom_point(aes(color = name), alpha = .5) + 
-  labs(
-    title = "Temperature plot",
-    x = "Minimum daily temperature (C)",
-    y = "Maxiumum daily temperature (C)",
-    caption = "Data from the rnoaa package") + 
-  scale_x_continuous(
-    breaks = c(-15, 0, 15), 
-    labels = c("-15ºC", "0", "15"),
-    limits = c(-20, 30)) + 
-  scale_y_continuous(
-    trans = "sqrt", 
-    position = "right")
-```
-
-
-colors: `scale_color_hue()`
-
-`viridis` package
-
-```{r}
-weather_df %>% 
-  ggplot(aes(x = tmin, y = tmax)) + 
-  geom_point(aes(color = name), alpha = .5) + 
-  labs(
-    title = "Temperature plot",
-    x = "Minimum daily temperature (C)",
-    y = "Maxiumum daily temperature (C)",
-    caption = "Data from the rnoaa package") + 
-  scale_color_hue(name = "Location", h = c(100, 300))
-
-ggp_temp_plot = 
-  weather_df %>% 
-  ggplot(aes(x = tmin, y = tmax)) + 
-  geom_point(aes(color = name), alpha = .5) + 
-  labs(
-    title = "Temperature plot",
-    x = "Minimum daily temperature (C)",
-    y = "Maxiumum daily temperature (C)",
-    caption = "Data from the rnoaa package"
-  ) + 
-  viridis::scale_color_viridis(
-    name = "Location", 
-    discrete = TRUE
-  )
-```
-
-We used `discrete = TRUE` because the color aesthetic is mapped to a discrete variable. In other cases (for example, when color mapped to prcp) you can omit this argument to get a continuous color gradient. The `viridis::scale_fill_viridis()` function is appropriate for the fill aesthetic used in histograms, density plots, and elsewhere.
-
-## Themes
-
-*  background color 
-*  location of the the legend.
-
-```{r}
-ggp_temp_plot + 
-  theme(legend.position = "bottom")
-
-ggp_temp_plot + 
-  theme_classic() + 
-  theme(legend.position = "bottom")
-
-ggp_temp_plot + 
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-
-ggp_temp_plot + 
-  ggthemes::theme_excel() + 
-  theme(legend.position = "bottom")
-```
-
-
-order matters for themes
-
-```{r}
-ggp_temp_plot + 
-  theme(legend.position = "bottom") +
-  theme_minimal()
-```
-
-## Data argument in `geom_*`
-
-include new geom
-
-```{r}
-central_park = 
-  weather_df %>% 
-  filter(name == "CentralPark_NY")
-
-waikiki = 
-  weather_df %>% 
-  filter(name == "Waikiki_HA")
-
-ggplot(data = waikiki, aes(x = date, y = tmax, color = name)) + 
-  geom_point() + 
-  geom_line(data = central_park)
-```
-
-## patchwork
-
-juxtapose different types of plots. 
-
-patchwork package
-
-```{r}
-tmax_tmin_p = 
-  weather_df %>% 
-  ggplot(aes(x = tmax, y = tmin, color = name)) + 
-  geom_point(alpha = .5) +
-  theme(legend.position = "none")
-
-prcp_dens_p = 
-  weather_df %>% 
-  filter(prcp > 0) %>% 
-  ggplot(aes(x = prcp, fill = name)) + 
-  geom_density(alpha = .5) + 
-  theme(legend.position = "none")
-
-tmax_date_p = 
-  weather_df %>% 
-  ggplot(aes(x = date, y = tmax, color = name)) + 
-  geom_point(alpha = .5) +
-  geom_smooth(se = FALSE) + 
-  theme(legend.position = "bottom")
-
-(tmax_tmin_p + prcp_dens_p) / tmax_date_p
-```
-
-## data manipulation
-
-change order of categorical variables
+additional way
 
 ```{r}
 weather_df %>%
-  ggplot(aes(x = name, y = tmax)) + 
-  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
-  theme(legend.position = "bottom")
-
-weather_df %>%
-  mutate(name = forcats::fct_relevel(name, c("Waikiki_HA", "CentralPark_NY", "Waterhole_WA"))) %>% 
-  ggplot(aes(x = name, y = tmax)) + 
-  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
-  theme(legend.position = "bottom")
-
-weather_df %>%
-  mutate(name = forcats::fct_reorder(name, tmax)) %>% 
-  ggplot(aes(x = name, y = tmax)) + 
-  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
-  theme(legend.position = "bottom")
+  count(month, name = "n_obs")
 ```
 
-
+do not use `table()`, the result is not df
 
 ```{r}
-pulse_data = 
-  haven::read_sas("./data/public_pulse_data.sas7bdat") %>%
-  janitor::clean_names() %>%
-  pivot_longer(
-    bdi_score_bl:bdi_score_12m,
-    names_to = "visit", 
-    names_prefix = "bdi_score_",
-    values_to = "bdi") %>%
-  select(id, visit, everything()) %>%
+weather_df %>%
+  pull(month) %>% 
+  table
+```
+
+multiple summaries
+
+`distinc()`, default find distinct for whole data set.
+
+```{r}
+weather_df %>%
+  group_by(month) %>%
+  summarize(
+    n_obs = n(),
+    n_days = n_distinct(date))
+```
+
+(2x2 tables)
+
+```{r}
+weather_df %>% 
   mutate(
-    visit = recode(visit, "bl" = "00m"),
-    visit = factor(visit, levels = str_c(c("00", "01", "06", "12"), "m"))) %>%
-  arrange(id, visit)
+    cold = case_when(
+      tmax <  5 ~ "cold",
+      tmax >= 5 ~ "not_cold",
+      TRUE      ~ "" # default setting
+  )) %>% 
+  filter(name != "Waikiki_HA") %>% 
+  group_by(name, cold) %>% 
+  summarize(count = n())
 
-ggplot(pulse_data, aes(x = visit, y = bdi)) + 
-  geom_boxplot()
+
+weather_df %>% 
+  mutate(
+    cold = case_when(
+      tmax <  5 ~ "cold",
+      tmax >= 5 ~ "not_cold",
+      TRUE      ~ "" # default setting
+  )) %>% 
+  filter(name != "Waikiki_HA") %>% 
+  group_by(name, cold) %>%
+  summarize(
+    n_obs = n()
+    ) %>% 
+  pivot_wider(
+    names_from = cold,
+    values_from = n_obs
+  )
+
+
+weather_df %>% 
+  mutate(
+    cold = case_when(
+      tmax <  5 ~ "cold",
+      tmax >= 5 ~ "not_cold",
+      TRUE      ~ "" # default setting
+  )) %>% 
+  filter(name != "Waikiki_HA") %>% 
+  janitor::tabyl(name, cold)
+```
+
+## General summaries
+
+mean(), median(), var(), sd(), mad(), IQR(), min(), and max(). 
+
+by default when calculate statistics if there is missing obs, then statistics would be missing.
+
+use `na.rm = TRUE` to calculate mean ignore missing.
+
+```{r}
+weather_df %>%
+  group_by(month) %>%
+  summarize(
+    mean_tmax = mean(tmax),
+    mean_prec = mean(prcp, na.rm = TRUE),
+    median_tmax = median(tmax),
+    sd_tmax = sd(tmax))
+
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(
+    mean_tmax = mean(tmax),
+    median_tmax = median(tmax))
+
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(across(tmin:prcp, mean))
 ```
 
 ```{r}
-pup_data = 
-  read_csv("./data/FAS_pups.csv", col_types = "ciiiii") %>%
-  janitor::clean_names() %>%
-  mutate(sex = recode(sex, `1` = "male", `2` = "female")) 
-
-litter_data = 
-  read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>%
-  janitor::clean_names() %>%
-  separate(group, into = c("dose", "day_of_tx"), sep = 3)
-
-fas_data = left_join(pup_data, litter_data, by = "litter_number") 
-
-fas_data %>% 
-  select(sex, dose, day_of_tx, pd_ears:pd_walk) %>% 
-  pivot_longer(
-    pd_ears:pd_walk,
-    names_to = "outcome", 
-    values_to = "pn_day") %>% 
-  drop_na() %>% 
-  mutate(outcome = forcats::fct_reorder(outcome, pn_day, median)) %>% 
-  ggplot(aes(x = dose, y = pn_day)) + 
-  geom_violin() + 
-  facet_grid(day_of_tx ~ outcome)
-
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(mean_tmax = mean(tmax, na.rm=TRUE)) %>%
+  ggplot(aes(x = month, y = mean_tmax, color = name)) + 
+    geom_point() + geom_line() + 
+    theme(legend.position = "bottom")
 ```
+
+produce markdown table
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(mean_tmax = mean(tmax)) %>% 
+  pivot_wider(
+    names_from = name,
+    values_from = mean_tmax) %>% 
+  knitr::kable(digits = 1)
+```
+
